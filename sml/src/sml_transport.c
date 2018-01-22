@@ -44,6 +44,7 @@ size_t sml_read(int fd, fd_set *set, unsigned char *buffer, size_t len) {
 			
 			r = read(fd, &(buffer[tr]), len - tr);
 			if (r < 0) continue;
+			if (r == 0) return 0;
 
 			tr += r;
 		}
@@ -60,9 +61,11 @@ size_t sml_transport_read(int fd, unsigned char *buffer, size_t max_len) {
 	unsigned char buf[max_len];
 	memset(buf, 0, max_len);
 	unsigned int len = 0;
+	size_t r;
 	
 	while (len < 8) {
-		sml_read(fd, &readfds, &(buf[len]), 1);
+		r=sml_read(fd, &readfds, &(buf[len]), 1);
+		if (r==0) return 0;
 
 		if ((buf[len] == 0x1b && len < 4) || (buf[len] == 0x01 && len >= 4)) {
 			len++;
@@ -76,13 +79,15 @@ size_t sml_transport_read(int fd, unsigned char *buffer, size_t max_len) {
 
 	while ((len+8) < max_len) {
 		
-		sml_read(fd, &readfds, &(buf[len]), 4);
+		r=sml_read(fd, &readfds, &(buf[len]), 4);
+		if (r==0) return 0;
 			
 		if (memcmp(&buf[len], esc_seq, 4) == 0) {
 			
 			// found esc sequence
 			len += 4;
-			sml_read(fd, &readfds, &(buf[len]), 4);
+			r=sml_read(fd, &readfds, &(buf[len]), 4);
+			if (r==0) return 0;
 			
 			if (buf[len] == 0x1a) {
 				
@@ -113,6 +118,9 @@ void sml_transport_listen(int fd, void (*sml_transport_receiver)(unsigned char *
 
 		if (bytes > 0) {
 			sml_transport_receiver(buffer, bytes);
+		}
+		if (bytes == 0){
+			return;
 		}
 	}
 }
