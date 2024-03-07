@@ -79,6 +79,9 @@ size_t sml_transport_read(int fd, unsigned char *buffer, size_t max_len) {
 
 		if ((buf[len] == 0x1b && len < 4) || (buf[len] == 0x01 && len >= 4)) {
 			len++;
+			buffer->bad_bytes_read++;
+			if (buffer->bad_bytes_read++>1024)
+				fprintf(stderr, "libsml: error: sml_transport_read(): read more than 1024 bytes without a valid start sequence. are you sure the input really is sml?\n");
 		} else {
 			len = 0;
 		}

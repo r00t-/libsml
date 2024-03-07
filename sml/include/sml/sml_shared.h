@@ -74,6 +74,7 @@ typedef struct {
 	size_t cursor;
 	int error;
 	char *error_msg;
+	int bad_bytes_read;
 } sml_buffer;
 
 sml_buffer *sml_buffer_init(size_t length);
